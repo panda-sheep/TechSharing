@@ -1,8 +1,9 @@
+<!-- 不涉及官方文档中的实验性内容 -->
 # Spark 
 
 ## SparkSQL
 
-## PySpark
+## pyspark
 
 * SparkConf()
 
@@ -42,8 +43,37 @@
     * addInPlace(value1, value2)
     * zero(value)
 
+* MarshalSerializer/PickleSerializer
+    两个对象序列化类
+    
+    * dumps()
+    * loads()
 
-    
+* StatusTracker()
+    
+    用来监视job和stage
+
+* Profiler()
+
+    一个开发者API，关于profile的一些简单操作
+
+* BasicProfiler()
+
+    默认的Profiler，基于cProfile和Accumulator实现
+
+## pyspark.sql 
+
+* sql.SparkSession()
+
+    SparkSQL的进入点，用于创建DataFrame，将DataFrame注册成表，在表上执行SQL，缓存表，读取parquet文件
+
+    * sql(sqlQuery)
+    执行语句然后返回结果DataFrame
+
+    * table(tableName)
+    将一个表转化为DataFrame
+
+
 
 
 ## Difference with MySQL
