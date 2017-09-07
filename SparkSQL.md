@@ -7,26 +7,26 @@
 
 * SparkConf()
 
-    这个类通过键值对的形式来对Spark应用进行配置或者查看相关配置，这里的配置优先级，要高于Spark预先的配置
+    这个类通过键值对的形式来对Spark应用进行配置或者查看相关配置，这里的配置优先级，要高于Spark预先的配置
 
 * SparkContext()
     
-    Spark功能的入口，用于创建与Spark集群的连接，可以在集群上创建RDD（弹性分布式数据集）和broadcast变量
+    Spark功能的入口，用于创建与Spark集群的连接，可以在集群上创建RDD（弹性分布式数据集）和broadcast量
 
     * addFile() 将文件分发到集群的所有节点
-    * addPyFile() 分发并执行python脚本
+    * addPyFile() 分发并执行python脚本
     * cancelAllJobs() 
     * cancelJobGroup()
     * setJobGroup()    
     * runJob()
-    * range() 分布式实现的range()
+    * range()分布式实现的range()
 * RDD()
     
     RDD相关操作
 
 * StorageLevel()
 
-    用于操作RDD的存储等级，在内存还是在磁盘等等
+    用于操作RDD的存储等级，在内存还是在磁盘等等
 
 * Broadcast() 
     
@@ -34,7 +34,7 @@
 
 * Accumlator()
 
-    一个具有访问权限限制的变量类，支持int和float这种原始数据类型，worker tasks拥有使用+=运算符对Accumulator的写权限，而只有驱动程序能够读这个值。
+    一个具有访问权限限制的变量类，支持int和float这种原始数据类型，worker tasks拥有使用+=运算符对Accumulator的写权限，而只有驱动程序能够读这个值。
 
 * AccumlatorParam()
 
@@ -51,7 +51,7 @@
 
 * StatusTracker()
     
-    用来监视job和stage
+    用来监视job和stage
 
 * Profiler()
 
@@ -68,10 +68,12 @@
     SparkSQL的进入点，用于创建DataFrame，将DataFrame注册成表，在表上执行SQL，缓存表，读取parquet文件
 
     * sql(sqlQuery)
-    执行语句然后返回结果DataFrame
+    
+    执行语句然后返回结果DataFrame
 
     * table(tableName)
-    将一个表转化为DataFrame
+
+    将一个表转化为DataFrame
 
 
 
