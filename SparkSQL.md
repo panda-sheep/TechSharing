@@ -69,11 +69,64 @@
 
     * sql(sqlQuery)
     
-    执行语句然后返回结果DataFrame
+        执行语句然后返回结果DataFrame
 
     * table(tableName)
 
-    将一个表转化为DataFrame
+        将一个表转化为DataFrame
 
+    * udf
+        注册udf（用户自定义函数），以便在SQL语句中使用。
 
+* sql.SQLContext()
+
+    处理结构化数据的入口，在2.0版本中被SparkSession替代，但为了保证兼容性，目前还是保留了这个类
+
+    * cacheTable(tableName)/uncacheTable(tableName)/clearCache()
+
+        在内存中缓存表/删除缓存中的表/清除缓存
+    
+    * createDateFrame()
+
+    * createExternalTable() 
+
+        基于数据源中的数据集创建一个外部表
+
+    * registerDataFrameAsTable(df, tableName)   
+
+        把指定的DataFrame注册成临时表
+
+    * registerFunction(name, f, returnType=StringType)
+
+        把一改python函数注册成自定义函数，在SQL语句中使用
+
+    * registerJavaFunction(name, javaClassName, returnType=None)
+
+    * sql(sqlQuery)
+        执行SQL，将结果以DataFrame形式返回
+
+    * table(tableName)
+
+    * tableNames(dbName=None)
+
+        返回数据库中的表名列表
+
+    * tables(dbName=None)
+
+        返回数据库中的表名DataFrame
+
+* sql.HiveContext()
+
+* sql.UDFRegistration(sqlContext)
+
+    * register(name, f, returnType=StringType)
+
+        将Python函数注册为用户自定义函数
+
+* sql.DataFrame(jdf, sql_ctx)
+
+    DataFrame 相当于SparkSQL中的关系表，可以由SQLContext类来创建，自带方法十分丰富。 
+* sql.Column(jc)
+
+    DataFrame中的一列           
 ## Difference with MySQL
