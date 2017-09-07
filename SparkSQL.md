@@ -128,5 +128,106 @@
     DataFrame 相当于SparkSQL中的关系表，可以由SQLContext类来创建，自带方法十分丰富。 
 * sql.Column(jc)
 
-    DataFrame中的一列           
+    DataFrame中的一列，创建Column的实例是一个语法糖
+
+        # 1. Select a column out of a DataFrame
+
+        df.colName
+        df["colName"]
+
+        # 2. Create from an expression
+        df.colName + 1
+        1 / df.colName
+
+    也有非常丰富的方法，如排序，按位运算
+
+* sql.Row
+
+    DataFrame中的行
+    
+    可以通过row.key或者row[key]的方式，访问Row中的field
+
+    可以通过key in row这个表达式的真假值来判断row中有没有相应的key
+
+    * asDict(recursive=False)
+
+        将Row转化为字典形式，支持递归转化
+
+* sql.DataFrameNaFunctions(df)
+
+    用于处理DataFrame中的缺失数据
+
+    * drop(how='any', thresh=None, subset=None)
+
+        返回一个没有null值的DataFrame
+
+    * fill(value, subset=None)
+
+        把null都替换成指定的value
+    
+    * replace(to_replace, value, subset=None)
+
+        替换一些指定值
+
+* sql.DataFrameStatFunctions(df)
+
+    对DataFrame的统计功能，比如协方差
+
+* sql.DataFrameReader(spark)
+
+    用于从外部存储系统里读取DataFrame的接口，比如文件系统，KV存储等，通过spark.read()访问
+
+    * csv()
+
+        读取csv文件
+
+    * format(source)
+
+        指定数据源的格式
+
+            >>> df = spark.read.format('json').load('python/test_support/sql/people.json')
+            >>> df.dtypes
+            [('age', 'bigint'), ('name', 'string')]
+
+    * jdbc(url, table, column=None, lowerBound=None, upperBound=None, numPartitions=None, predicates=None, properties=None)
+
+        读取数据库的表构建DataFrame    
+
+        表的分区都是并行地读取。官方提醒不要在大集群上创建太多这种并行读取，否则Spark会把数据库弄崩溃。
+
+    * json()
+
+        读取json文件
+
+    * load(path=None, format=None, schema=None, **options)    
+
+        从数据源里载入数据
+    
+    * option(key, value)/options(**options)
+
+        增加输入选项，目前好像只支持timeZone选项，用于指定时区来对时间戳进行解析
+
+    * orc()
+
+        读取orc文件
+
+    * parquet()
+
+        读取parquet文件
+
+    * schema(schema)
+
+        指定读取的schema
+
+    * table(tableName)
+
+    * text()
+
+        读取txt文件
+
+* sql.DataFrameWriter(df)
+
+    将DataFrame写入到各种外部存储系统
+
+    insertInto(tableName, overwrite=False)
 ## Difference with MySQL
