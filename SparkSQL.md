@@ -11,7 +11,7 @@
 
 * SparkContext()
     
-    Spark功能的入口，用于创建与Spark集群的连接，可以在集群上创建RDD（弹性分布式数据集）和broadcast量
+    Spark功能的入口，用于创建与Spark集群的连接，可以在集群上创建RDD（弹性分布式数据集）和broadcast量
 
     * addFile() 将文件分发到集群的所有节点
     * addPyFile() 分发并执行python脚本
@@ -53,15 +53,15 @@
     
     用来监视job和stage
 
-* Profiler()
+* Profiler()
 
     一个开发者API，关于profile的一些简单操作
 
 * BasicProfiler()
 
-    默认的Profiler，基于cProfile和Accumulator实现
+    默认的Profiler，基于cProfile和Accumulator实现
 
-## pyspark.sql 
+## pyspark.sql 
 
 * sql.SparkSession()
 
@@ -69,13 +69,11 @@
 
     * sql(sqlQuery)
     
-    执行语句然后返回结果DataFrame
+    执行语句然后返回结果DataFrame
 
     * table(tableName)
 
     将一个表转化为DataFrame
-
-
 
 
 ## Difference with MySQL
