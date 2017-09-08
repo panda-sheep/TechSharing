@@ -396,7 +396,7 @@
 
 ## pyspark.sql.streaming module
 
-在2.0中新增的模块，以流的形式在后台持续执行语句，所有方法都是线程安全的，不过这个模块还没有稳定下来
+在2.0中新增的模块，以流的形式在后台持续执行语句，所有方法都是线程安全的，不过这个模块还没有稳定下来。应该是标准spark streaming的sql扩展。
 
 
 ## Difference with MySQL
