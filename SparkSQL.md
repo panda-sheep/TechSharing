@@ -229,5 +229,166 @@
 
     将DataFrame写入到各种外部存储系统
 
-    insertInto(tableName, overwrite=False)
+    * insertInto(tableName, overwrite=False)
+
+        将DataFrame插入到指定表里
+
+    * jdbc(url, table, mode=None, properties=None)
+
+    * json()
+
+    * mode(saveMode)
+
+        append, overwrite, error, ignore
+    
+    * option(key, value)
+
+        timeZone
+    
+    * orc()
+
+    * parquet()
+
+    * partitionBy(*cols)
+
+        输出时进行分区操作
+    
+    * save(path=None, format=None, mode=None, partitionBy=None, **options)
+
+        将DataFrame保存到数据源里
+    
+    * saveAsTable(name, format=None, mode=None, partitionBy=None, **options)
+
+        将DataFrame保存成指定的表
+
+    * text
+
+## pyspark.sql.types module
+
+数据类型转换
+* sql.types.DataType
+
+    * fromInternal(obj)/toInternal(obj)
+
+        将内部SQL对象转化成原生Python对象/反过来
+
+    * json()
+    * jsonvalue()
+    * simpleString()
+    * needConversion()
+
+        用于指定某些对象是否需要转化
+
+* sql.types.NullType
+* sql.types.StringType
+* sql.types.BinaryType
+* sql.types.BoolenType
+* sql.types.DateType
+
+    * EPOCH_ORDINAL = 719163
+
+    * fromInternal(v)
+
+    * needConversion()
+
+    * toInternal(d)
+
+* sql.types.TimestampType
+
+    * fromInternal(ts)
+
+    * needConversion()
+
+    * toInternal(dt)
+
+* sql.types.DecimalType(precision=10, scale=0)
+
+    指定定点精度的十进制数据类型，当数据范围超过六十四位有符号整形时可以使用
+
+    * jsonValue()
+    * simpleString()
+
+* sql.types.DoubleType
+* sql.types.FloatType
+* sql.types.ByteType
+    * simpleString()
+* sql.types.IntegerType
+    
+    32位
+    * simpleString()
+* sql.types.LongType  
+
+    64位
+    * simpleString()
+
+* sql.types.ShortType
+
+    16位
+    * simpleString()
+
+* sql.types.ArrayType(elementType, containsNull=True)
+
+    
+    * fromInternal(obj)
+
+    * fromJson(json)
+
+    * jsonValue()
+
+    * needConversion()
+
+    * simpleString()
+
+    * toInternal(obj)
+   
+* sql.types.MapType(keyType, valueType, valueContainsNull=True)
+
+    * fromInternal(obj)
+
+    * fromJson(json)
+
+    * jsonValue()
+
+    * needConversion()
+
+    * simpleString()
+
+    * toInternal(obj)
+
+* sql.types.StructType(fields=None)
+
+    这个数据类型代表一个Row，支持多种语法糖来访问field
+
+    * add(field, data_type=None, nullable=True, metadata=None)
+
+        增加一个新元素
+
+    * fromInternal(obj)
+
+    * fromJson(json)
+
+    * jsonValue()
+
+    * needConversion()
+
+    * simpleString()
+
+    * toInternal(obj)
+* sql.types.StructField(name, dataType, nullable=True, metadata=None)
+  
+    StructType中的一个field
+
+    * fromInternal(obj)
+
+    * fromJson(json)
+
+    * jsonValue()
+
+    * needConversion()
+
+    * simpleString()
+
+    * toInternal(obj)
+
+
 ## Difference with MySQL
