@@ -2,6 +2,13 @@
 # Spark 
 
 ## SparkSQL
+流程
+
+* 创建SparkSession
+* 创建DataFrames
+* 在DF上执行SQL语句
+* 将结果DF通过writer方法写入结果表
+
 
 ## pyspark
 
