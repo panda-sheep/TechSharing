@@ -406,7 +406,9 @@
 在2.0中新增的模块，以流的形式在后台持续执行语句，所有方法都是线程安全的，不过这个模块还没有稳定下来。应该是标准spark streaming的sql扩展。
 
 
-## Difference with MySQL
+
+
+# Difference with MySQL
 
 * MySQL
     
@@ -434,7 +436,8 @@
                 | INTO var_name [, var_name]]
             [FOR UPDATE | LOCK IN SHARE MODE]]
 
-Supported Hive Features
+
+## Supported Hive Features
 
 Spark SQL supports the vast majority of Hive features, such as:
 
@@ -509,7 +512,7 @@ Spark SQL supports the vast majority of Hive features, such as:
     * MAP<>
     * STRUCT<>
 
-Hive SQL
+## Hive SQL
 
     SELECT [ALL | DISTINCT] select_expr, select_expr, ...
     FROM table_reference
