@@ -68,7 +68,7 @@
 
     默认的Profiler，基于cProfile和Accumulator实现
 
-## pyspark.sql 
+### pyspark.sql 
 
 * sql.SparkSession()
 
@@ -270,7 +270,7 @@
 
     * text
 
-## pyspark.sql.types module
+### pyspark.sql.types module
 
 数据类型转换
 * sql.types.DataType
@@ -397,11 +397,11 @@
 
     * toInternal(obj)
 
-## pyspark.sql.functions module
+### pyspark.sql.functions module
 
 各种内建函数，比如各种反三角函数，编解码，格式转换，不同类型对象创建
 
-## pyspark.sql.streaming module
+### pyspark.sql.streaming module
 
 在2.0中新增的模块，以流的形式在后台持续执行语句，所有方法都是线程安全的，不过这个模块还没有稳定下来。应该是标准spark streaming的sql扩展。
 
@@ -410,7 +410,7 @@
 
 # Difference with MySQL
 
-* MySQL
+## MySQL
     
         SELECT
             [ALL | DISTINCT | DISTINCTROW ]
