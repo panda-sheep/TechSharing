@@ -407,3 +407,104 @@
 
 
 ## Difference with MySQL
+
+* MySQL
+    
+        SELECT
+            [ALL | DISTINCT | DISTINCTROW ]
+                [HIGH_PRIORITY]
+                [STRAIGHT_JOIN]
+                [SQL_SMALL_RESULT] [SQL_BIG_RESULT] [SQL_BUFFER_RESULT]
+                [SQL_CACHE | SQL_NO_CACHE] [SQL_CALC_FOUND_ROWS]
+            select_expr [, select_expr ...]
+            [FROM table_references
+                [PARTITION partition_list]
+            [WHERE where_condition]
+            [GROUP BY {col_name | expr | position}
+                [ASC | DESC], ... [WITH ROLLUP]]
+            [HAVING where_condition]
+            [ORDER BY {col_name | expr | position}
+                [ASC | DESC], ...]
+            [LIMIT {[offset,] row_count | row_count OFFSET offset}]
+            [PROCEDURE procedure_name(argument_list)]
+            [INTO OUTFILE 'file_name'
+                    [CHARACTER SET charset_name]
+                    export_options
+                | INTO DUMPFILE 'file_name'
+                | INTO var_name [, var_name]]
+            [FOR UPDATE | LOCK IN SHARE MODE]]
+
+Supported Hive Features
+
+Spark SQL supports the vast majority of Hive features, such as:
+
+* Hive query statements, including:
+    * SELECT
+    
+    * GROUP BY
+    
+    * ORDER BY
+    
+    * CLUSTER BY
+    
+    * SORT BY
+
+* All Hive operators, including:
+    * Relational operators (=, ⇔, ==, <>, <, >, >=, 
+    <=, etc)
+    * Arithmetic operators (+, -, *, /, %, etc)
+
+    * Logical operators (AND, &&, OR, ||, etc)
+
+    * Complex type constructors
+
+    * Mathematical functions (sign, ln, cos, etc)
+
+    * String functions (instr, length, printf, etc)
+
+* User defined functions (UDF)
+
+* User defined aggregation functions (UDAF)
+
+* User defined serialization formats (SerDes)
+
+* Window functions
+
+* Joins
+
+    * JOIN
+
+    * {LEFT|RIGHT|FULL} OUTER JOIN
+
+    * LEFT SEMI JOIN
+
+    * CROSS JOIN
+
+* Unions
+
+* Sub-queries
+
+    * SELECT col FROM ( SELECT a + b AS col from t1) t2
+* Sampling
+* Explain
+* Partitioned tables including dynamic partition insertion
+* View
+* All Hive DDL Functions, including:
+    * CREATE TABLE
+    * CREATE TABLE AS SELECT
+    * ALTER TABLE
+* Most Hive Data types, including:
+    * TINYINT
+    * SMALLINT
+    * INT
+    * BIGINT
+    * BOOLEAN
+    * FLOAT
+    * DOUBLE
+    * STRING
+    * BINARY
+    * TIMESTAMP
+    * DATE
+    * ARRAY<>
+    * MAP<>
+    * STRUCT<>
