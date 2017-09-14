@@ -508,3 +508,73 @@ Spark SQL supports the vast majority of Hive features, such as:
     * ARRAY<>
     * MAP<>
     * STRUCT<>
+
+Hive SQL
+
+    SELECT [ALL | DISTINCT] select_expr, select_expr, ...
+    FROM table_reference
+    [WHERE where_condition]
+    [GROUP BY col_list [HAVING condition]]
+    [   CLUSTER BY col_list
+    | [DISTRIBUTE BY col_list] [SORT BY| ORDER BY col_list]
+    ]
+    [LIMIT number]
+* 使用ALL和DISTINCT选项区分对重复记录的处理。默认是ALL，表示查询所有记录。DISTINCT表示去掉重复的记录
+
+* Where 条件, 类似我们传统SQL的where 条件
+* 目前支持 AND, OR, between, IN, NOT IN
+* 不支持EXIST ,NOT EXIST
+* ORDER BY 全局排序，只有一个Reduce任务
+* SORT BY 只在本机做排序
+* Limit 可以限制查询的记录数
+        
+        SELECT * FROM t1 LIMIT 5
+
+* REGEX Column Specification
+
+    SELECT 语句可以使用正则表达式做列选择，下面的语句查询除了 ds 和 hr 之外的所有列：
+
+        SELECT `(ds|hr)?+.+` FROM test
+
+* 基于Partition的查询
+    * 一般 SELECT 查询会扫描整个表，使用 PARTITIONED BY 子句建表，查询就可以利用分区剪枝（input pruning）的特性
+    * Hive 当前的实现是，只有分区断言出现在离 FROM 子句最近的那个WHERE 子句中，才会启用分区剪枝
+
+* Join
+        
+        Syntax
+        join_table: 
+        table_reference JOIN table_factor [join_condition] 
+        | table_reference {LEFT|RIGHT|FULL} [OUTER] JOIN table_reference join_condition 
+        | table_reference LEFT SEMI JOIN table_reference join_condition 
+
+        table_reference: 
+            table_factor 
+        | join_table 
+
+        table_factor: 
+            tbl_name [alias] 
+        | table_subquery alias 
+        | ( table_references ) 
+
+        join_condition: 
+            ON equality_expression ( AND equality_expression )* 
+
+        equality_expression: 
+            expression = expression
+    
+    * Hive 只支持等值连接（equality joins）、外连接（outer joins）和（left semi joins）。Hive 不支持所有非等值的连接，因为非等值连接非常难转化到 map/reduce 任务
+ 
+    * LEFT，RIGHT和FULL OUTER关键字用于处理join中空记录的情况
+    * LEFT SEMI JOIN 是 IN/EXISTS 子查询的一种更高效的实现
+    * join 时，每次 map/reduce 任务的逻辑是这样的：reducer 会缓存 join 序列中除了最后一个表的所有表的记录，再通过最后一个表将结果序列化到文件系统
+    * 实践中，应该把最大的那个表写在最后
+
+    * SELECT a.* FROM a JOIN b ON (a.id = b.id)
+    * SELECT a.* FROM a JOIN b 
+        ON (a.id = b.id AND a.department = b.department)
+    * 可以 join 多于 2 个表，例如
+    SELECT a.val, b.val, c.val FROM a JOIN b 
+        ON (a.key = b.key1) JOIN c ON (c.key = b.key2)
+    
+    * 如果join中多个表的 join key 是同一个，则 join 会被转化为单个 map/reduce 任务
