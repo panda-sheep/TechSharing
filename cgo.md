@@ -25,7 +25,6 @@ import "C"
 // #cgo LDFLAGS: -lpng
 // #include <png.h>
 import "C"
-import "C"
 ```
 使用pkg-config
 ``` go
