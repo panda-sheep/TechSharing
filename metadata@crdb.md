@@ -7,17 +7,23 @@ Cockroach keys are arbitrary byte arrays. Keys come in two flavors:
 1. system keys 
 2. table data keys
 
-System keys are used by Cockroach for internal data structures and metadata. 
+System keys are used by Cockroach for internal data structures and metadata.
+
+内部数据结构和元数据 
 
 Table data keys contain SQL table data (as well as index data). 
 
+SQL表数据和索引数据
+
 System and table data keys are prefixed in such a way that all system keys sort before any table data keys.
+
+都有前缀，使得他们排在最前面
 
 System keys come in several subtypes:
 
-* **Global keys** store cluster-wide data such as the "meta1" and "meta2" keys as well as various other system-wide keys such as the node and store ID allocators.
+* **Global keys** store cluster-wide data such as the "meta1" and "meta2" keys as well as various other system-wide keys such as the node and store ID allocators. 存储集群范围的数据，如meta1 meta2, 和其他系统范围的key，比如节点和存储ID分配
 
-* **Store local keys** are used for unreplicated store metadata (e.g. the StoreIdent structure). "Unreplicated" indicates that these values are not replicated across multiple stores because the data they hold is tied to the lifetime of the store they are present on.
+* **Store local keys** are used for unreplicated store metadata (e.g. the StoreIdent structure). "Unreplicated" indicates that these values are not replicated across multiple stores because the data they hold is tied to the lifetime of the store they are present on.非复制存储元数据
 
 * **Range local keys** store range metadata that is associated with a global key. Range local keys have a special prefix followed by a global key and a special suffix. For example, transaction records are range local keys which look like: 
 
