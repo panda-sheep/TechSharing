@@ -19,7 +19,7 @@
 * `FROBNICATE SESSION`, 更改会话的设置 
 * `FROBNICATE ALL`, 更改集群和会话的设置
 
-首先，我们打开`sql.y`，搜索`keyword`，会看到一堆按字母排列的token定义。由于已经有了`SESSION`, `CLUSTER`, `ALL`，我们只需要添加`FROBNICATE`。
+首先，我们打开`sql.y`，搜索`keyword`，会看到一堆按字母排列的token定义。由于已经有了`SESSION`, `CLUSTER`, `ALL`，我们只需要添加`FROBNICATE`。
 
 ![](./keyword.png)
 
