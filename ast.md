@@ -204,9 +204,9 @@ frobnicate_stmt:
 | FROBNICATE SESSION { $$.val = &Frobnicate{Mode: FrobnicateModeSession} }
 | FROBNICATE ALL { $$.val = &Frobnicate{Mode: FrobnicateModeAll} } 
 ```
-`$$.val`代表这个规则生成的节点值.多出来的`$`表明这个可以用在yacc中.
+`$$.val`代表这个规则生成的节点值.多出来的`$`表明这个可以用在yacc中.
 
-一个更有用的形式是在子产生式中引用这个值(One of the more useful forms refers to node values of sub-productions)
+一个更有用的形式是在子产生式中引用这个值(One of the more useful forms refers to node values of sub-productions)
 
 For instance, in these three statements $1 would be the token `FROBNICATE`.
 
@@ -216,14 +216,14 @@ make generate
 make test
 ```
 
-再跑下测试:
+再跑下测试:
 
 ```
 $ ./cockroach sql --insecure -e "frobnicate cluster"
 Error: pq: unknown statement type: *tree.Frobnicate
 Failed running "sql"
 ```
-这个和上面不一样的错误是由SQL planner报出来的,它现在还不知道怎么去处理这个新语句类型.
+这个和上面不一样的错误是由SQL planner报出来的,它现在还不知道怎么去处理这个新语句类型.
 
 planner是集中调度语句的地方,因此我们要在这里添加语义.
 
@@ -231,13 +231,13 @@ planner是集中调度语句的地方,因此我们要在这里添加语义.
 
 ![](newplan.png)
 
-在这个type switch里我们加一个case:
+在这个type switch里我们加一个case:
 
 ```go
 case *tree.Frobnicate:
     return p.Frobnicate(ctx, n)
 ```
-接着我们在`pkg/sql/frobnicate.go`中实现这个方法:
+接着我们在`pkg/sql/frobnicate.go`中实现这个方法:
 ```go
 package sql
 
@@ -260,3 +260,5 @@ Error: pq: We're not quite frobnicating yet...
 Failed running "sql"
 ```
 我们已经能报出我们自己定义的错误信息了.
+
+---
