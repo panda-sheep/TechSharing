@@ -117,7 +117,7 @@ Failed running "sql"
 
 解决了语法之后，我们要为新语句加上适当的语义。我们需要一个AST节点，来进行解析器和运行时之间对语句结构的传递交流。
 
-`%type <tree.Statement>`这个东西意味着需要去实现`tree.Statement`（`pkg/sql/sem/tree/stmt.go`）接口。
+`%type <tree.Statement>`这个东西意味着需要去实现`tree.Statement`（`pkg/sql/sem/tree/stmt.go`）接口。
 
 ![](stmtgo.png)
 
