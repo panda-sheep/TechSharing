@@ -262,3 +262,30 @@ Failed running "sql"
 我们已经能报出我们自己定义的错误信息了.
 
 ---
+
+### 改变设置
+
+这部分是讲设置更改的实现的，因为太久远没有更新已经基本没用了
+
+### 增加一个语句的别名
+
+在`sql.y`中
+
+  <p>
+
+  ```diff
+  unreserved_keyword:
+  ...
++ | FROB
+  | FROBNICATE
+  ...
+
+  frobnicate_stmt:
+    FROBNICATE CLUSTER { $$.val = &Frobnicate{Mode: FrobnicateModeCluster} }
+  | FROBNICATE SESSION { $$.val = &Frobnicate{Mode: FrobnicateModeSession} }
+  | FROBNICATE ALL { $$.val = &Frobnicate{Mode: FrobnicateModeAll} }
++ | FROB CLUSTER { $$.val = &Frobnicate{Mode: FrobnicateModeCluster} }
++ | FROB SESSION { $$.val = &Frobnicate{Mode: FrobnicateModeSession} }
++ | FROB ALL { $$.val = &Frobnicate{Mode: FrobnicateModeAll} }
+  ```
+  </p>
