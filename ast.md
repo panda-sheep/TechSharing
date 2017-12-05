@@ -167,7 +167,7 @@ func (node *Frobnicate) String() string {
 }
 ```
 ---
-### 测试解析器
+### 测试解析器
 
 解析器的单元测试在`pkg/sql/parser/parse_test.go`中,里面大多数测试,都是简单地验证下示例语句有没有被正确地解析:
 
@@ -175,7 +175,7 @@ func (node *Frobnicate) String() string {
 
 ![](parser_test2.png)
 
-我们找一个合适的地方把我们的语句测例加进去:
+我们找一个合适的地方把我们的语句测例加进去:
 
 ```go
 // ...
