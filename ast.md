@@ -166,3 +166,97 @@ func (node *Frobnicate) String() string {
     return AsString(node)
 }
 ```
+---
+### 测试解析器
+
+解析器的单元测试在`pkg/sql/parser/parse_test.go`中,里面大多数测试,都是简单地验证下示例语句有没有被正确地解析:
+
+![](parser_test1.png)
+
+![](parser_test2.png)
+
+我们找一个合适的地方把我们的语句测例加进去:
+
+```go
+// ...
+	{`FROBNICATE CLUSTER`},
+	{`FROBNICATE SESSION`},
+	{`FROBNICATE ALL`},
+// ...
+```
+跑下测试:
+```
+$ make test
+...
+--- FAIL: TestParse (0.00s)
+    parse_test.go:721: FROBNICATE CLUSTER: expected success, but found unimplemented at or near "cluster"
+        FROBNICATE CLUSTER
+...
+```
+失败了,因为我们还有工作要做.
+
+---
+### 完成解释器的修改
+
+```
+frobnicate_stmt:
+  FROBNICATE CLUSTER { $$.val = &Frobnicate{Mode: FrobnicateModeCluster} }
+| FROBNICATE SESSION { $$.val = &Frobnicate{Mode: FrobnicateModeSession} }
+| FROBNICATE ALL { $$.val = &Frobnicate{Mode: FrobnicateModeAll} } 
+```
+`$$.val`代表这个规则生成的节点值.多出来的`$`表明这个可以用在yacc中.
+
+一个更有用的形式是在子产生式中引用这个值(One of the more useful forms refers to node values of sub-productions)
+
+For instance, in these three statements $1 would be the token `FROBNICATE`.
+
+
+```
+make generate
+make test
+```
+
+再跑下测试:
+
+```
+$ ./cockroach sql --insecure -e "frobnicate cluster"
+Error: pq: unknown statement type: *tree.Frobnicate
+Failed running "sql"
+```
+这个和上面不一样的错误是由SQL planner报出来的,它现在还不知道怎么去处理这个新语句类型.
+
+planner是集中调度语句的地方,因此我们要在这里添加语义.
+
+`pkg/sql/plan.go`:
+
+![](newplan.png)
+
+在这个type switch里我们加一个case:
+
+```go
+case *tree.Frobnicate:
+    return p.Frobnicate(ctx, n)
+```
+接着我们在`pkg/sql/frobnicate.go`中实现这个方法:
+```go
+package sql
+
+import (
+    "fmt"
+
+    "golang.org/x/net/context"
+
+    "github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
+)
+
+func (p *planner) Frobnicate(ctx context.Context, stmt *tree.Frobnicate) (planNode, error) {
+    return nil, fmt.Errorf("We're not quite frobnicating yet...")
+}
+```
+再测试一下:
+```
+$ ./cockroach sql --insecure -e "frobnicate cluster"
+Error: pq: We're not quite frobnicating yet...
+Failed running "sql"
+```
+我们已经能报出我们自己定义的错误信息了.
