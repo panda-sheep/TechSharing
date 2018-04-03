@@ -46,3 +46,22 @@ SPARK_HOME/sbin/start-slave.sh spark://spark1:7077 -c 10 -m 200g
 DSA_HOME/dsaServer.sh start
 ```
 
+## 3. 关闭
+
+1. 在安装了dbscale-spark-agent的机器上执行
+
+```
+DSA_HOME/dsaServer.sh stop
+```
+
+2. 在所有Spark服务器上执行:
+
+```
+SPARK_HOME/sbin/stop-slave.sh
+```
+
+3. 在Spark Master上执行:
+```
+SPARK_HOME/sbin/stop-master.sh
+```
+
