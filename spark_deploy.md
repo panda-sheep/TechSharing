@@ -38,6 +38,8 @@ SPARK_HOME/sbin/start-slave.sh spark://spark1:7077
 SPARK_HOME/sbin/start-slave.sh spark://spark1:7077 -c 10 -m 200g
 ```
 
+通常情况, 建议为Spark分配当前机器内存的75%.
+
 刷新`spark1:8080`页面, 可以看到成功加入到spark集群中的节点列表
 
 3. 在安装了dbscale-spark-agent的机器上执行
@@ -48,7 +50,7 @@ DSA_HOME/dsaServer.sh start
 
 ## 3. 关闭
 
-1. 在安装了dbscale-spark-agent的机器上执行
+1. 在安装了dbscale-spark-agent的机器上执行的
 
 ```
 DSA_HOME/dsaServer.sh stop
