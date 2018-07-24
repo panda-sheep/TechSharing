@@ -1,32 +1,43 @@
 #include <iostream>
 #include <thread>
-#include <chrono>
- 
+using namespace std;
+
+thread_local int g_n = 1;
+
+void f()
+{
+    g_n++;
+    cout << "id=" << std::this_thread::get_id() << "  n=" << g_n << endl;
+}
+
 void foo()
 {
-    std::cout << "foo" << std::endl;
-    // 模拟昂贵操作
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    thread_local int i = 0;
+    cout << "id=" << std::this_thread::get_id() << "  n=" << i << endl;
+    i++;
 }
- 
-void bar()
+
+void f2()
 {
-    std::cout << "bar" << std::endl;
-    // 模拟昂贵操作
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    foo();
+    foo();
 }
- 
+
 int main()
 {
-    std::cout << "starting first helper...\n";
-    std::thread helper1(foo);
- 
-    std::cout << "starting second helper...\n";
-    std::thread helper2(bar);
- 
-    std::cout << "waiting for helpers to finish..." << std::endl;
-    helper1.join();
-    helper2.join();
- 
-    std::cout << "done!\n";
+    g_n++;
+    f();               // 3
+    std::thread t1(f); // 2
+    std::thread t2(f); // 2
+
+    t1.join();
+    t2.join();
+
+    f2();               // 0 1
+    std::thread t4(f2); // 0 1
+    std::thread t5(f2); // 0 1
+
+    t4.join();
+    t5.join();
+    return 0;
 }
