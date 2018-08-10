@@ -222,3 +222,6 @@ for(int i: ai){
 }
 ```
 
+# boost 被 11吸收的库
+
+https://stackoverflow.com/questions/8851670/which-boost-features-overlap-with-c11
