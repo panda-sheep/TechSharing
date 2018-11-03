@@ -1,422 +1,583 @@
-# 前言
+<!-- 不涉及官方文档中的实验性内容 -->
+# Spark 
 
-这个调研主要是调研了整个SparkSQL的优化器框架，我觉得可以作为新产品优化器的TODO LIST，涉及的功能和内容，不一定都得我们自己来做，但要确保有这些东西而且能用，或者在这个列表的基础上增删。
+## SparkSQL
+流程
 
-# 参考资料
-
-https://www.gitbook.com/book/jaceklaskowski/mastering-spark-sql/details
-
-https://data-flair.training/blogs/spark-sql-optimization-catalyst-optimizer/
-
-# SparkSQL 语句执行流程
-
-## 标准的两阶段优化流程
-
-1. Logical Analysis
-
-2. Caching Replacement 
-
-3. Logical Query Optimization (using rule-based and cost-based optimizations)
-
-4. Physical Planning
-
-5. Physical Optimization (e.g. Whole-Stage Java Code Generation or Adaptive Query Execution)
-
-6. Constructing the RDD of Internal Binary Rows (that represents the structured query in terms of Spark Core’s RDD API)
-
-## QueryExecution — Structured Query Execution Pipeline of Dataset
-
-![](./Spark-SQL-Optimization.jpg)
-
-![QueryExecution — Structured Query Execution Pipeline of Dataset](./QueryExecution-execution-pipeline.png)
-
-|Attribute / Phase|Description|
-|-|-|
-|analyzed|通过了解析器的检查|
-|withCachedData|如果缓存中有所需数据，就以缓冲中的数据替换掉查询树的节点|
-|optimizedPlan|优化过后的逻辑计划|
-|sparkPlan|由QueryPlanner生成的一堆物理执行计划中的第一个|
-|executedPlan|优化后的物理计划|
-|toRdd|SparkSQL和SparkCore之间的一个分界，SQL执行计划会在这之后转化成Spark的计算流程|
-
-# Catalyst Optimizer 
-
-This optimizer is based on functional programming construct in Scala.
-
-Catalyst Optimizer supports both rule-based and cost-based optimization. 
-
-In rule-based optimization the rule based optimizer use set of rule to determine how to execute the query. 
-
-While the cost based optimization finds the most suitable way to carry out SQL statement. In cost-based optimization, multiple plans are generated using rules and then their cost is computed.
-
-## 催化剂优化器的组件
-
-1. Trees
-
-2. Rules
-
-Rule是将一个Tree转换到另一个Tree的函数。
-
-## Spark SQL Execution Plan
-
-* Analysis
-* Logical Optimization
-* Physical planning
-* Code generation
-
-![](Spark-SQL-execution-query-plan.jpg)
-
-1. Analysis
-对SQL Parser生成的AST进行分析：
-* Search relation BY NAME FROM CATALOG.
-
-* Map the name attribute, for example, col, to the input provided given operator’s children.
-
-* Determine which attributes match to the same value to give them unique ID.
-
-* Propagate and push type through expressions.
-
-2. Logical Optimization
-
-* constant folding （常数合并）
-* predicate pushdown
-* projection pruning （投影剪枝）
-* other rules
-
-3. Physical Planning
-
-    In this phase, one or more physical plan is formed from the logical plan, using physical operator matches the Spark execution engine. 
-
-    And it selects the plan using the cost model. It uses Cost-based optimization only to select join algorithms.
-
-    For small relation SQL uses broadcast join, the framework supports broader use of cost-based optimization. It can estimate the cost recursively for the whole tree using the rule.
-
-    Rule-based physical optimization, such as pipelining projections or filters into one Spark map Operation is also carried out by the physical planner. Apart from this, it can also push operations from the logical plan into data sources that support predicate or projection pushdown.
-
-4. Code Generation
-
-    在这个阶段就是将执行计划转换成Java字节码发送到每台机器上。
-
-# 优化方式
-
-## Hint Framework (Spark SQL 2.2)
-
-简单说就是通过可执行注释的方式，向优化器提供优化的建议。嗯，人工智能，人工的智能。
-
-这种优化适用于，没有或者没有足够的统计信息的时候（比如等等高直方图）。
-
-##  Rule-Based Optimizer
-
-* OptimizeMetadataOnlyQuery
-
-* ExtractPythonUDFFromAggregate
-
-* PruneFileSourcePartitions
-	
-* extraOptimizations
+* 创建SparkSession
+* 创建DataFrames
+* 在DF上执行SQL语句
+* 将结果DF通过writer方法写入结果表
 
 
-## Generic Rule-Based Query Optimizer (Catalyst Optimizer)
+## pyspark
 
-### 规则列表
+* SparkConf()
 
-* **Finish Analysis**
+    这个类通过键值对的形式来对Spark应用进行配置或者查看相关配置，这里的配置优先级，要高于Spark预先的配置
+
+* SparkContext()
     
-    EliminateSubqueryAliases
-	
-    EliminateView
-	
-    ReplaceExpressions
-	
-    ComputeCurrentTime 对应各种获取当前时间的函数
+    Spark功能的入口，用于创建与Spark集群的连接，可以在集群上创建RDD（弹性分布式数据集）和broadcast量
+
+    * addFile() 将文件分发到集群的所有节点
+    * addPyFile() 分发并执行python脚本
+    * cancelAllJobs() 
+    * cancelJobGroup()
+    * setJobGroup()    
+    * runJob()
+    * range()分布式实现的range()
+* RDD()
     
-    GetCurrentDatabase 对应current_database()函数
+    RDD相关操作
 
-    RewriteDistinctAggregates
-	
-    ReplaceDeduplicateWithAggregate
+* StorageLevel()
 
-* **Union**
+    用于操作RDD的存储等级，在内存还是在磁盘等等
 
-    CombineUnions
+* Broadcast() 
+    
+    通过SparkContext.broadcast()方法创建的广播变量
 
-* **Subquery**
+* Accumlator()
 
-    OptimizeSubqueries
+    一个具有访问权限限制的变量类，支持int和float这种原始数据类型，worker tasks拥有使用+=运算符对Accumulator的写权限，而只有驱动程序能够读这个值。
 
-* **Replace Operators**
+* AccumlatorParam()
 
-    ReplaceIntersectWithSemiJoin
+    一个对Accumlator的helper类，
+    
+    * addInPlace(value1, value2)
+    * zero(value)
 
-    ReplaceExceptWithAntiJoin
+* MarshalSerializer/PickleSerializer
+    两个对象序列化类
+    
+    * dumps()
+    * loads()
 
-    ReplaceDistinctWithAggregate
+* StatusTracker()
+    
+    用来监视job和stage
 
-* **Aggregate**
+* Profiler()
 
-    RemoveLiteralFromGroupExpressions
-	
-    RemoveRepetitionFromGroupExpressions
+    一个开发者API，关于profile的一些简单操作
 
-* **Operator Optimizations**
+* BasicProfiler()
 
-    PushProjectionThroughUnion
-	
-    ReorderJoin
+    默认的Profiler，基于cProfile和Accumulator实现
 
-    EliminateOuterJoin
+### pyspark.sql 
 
-    PushPredicateThroughJoin
+* sql.SparkSession()
 
-    PushDownPredicate
+    SparkSQL的进入点，用于创建DataFrame，将DataFrame注册成表，在表上执行SQL，缓存表，读取parquet文件
 
-    LimitPushDown
+    * sql(sqlQuery)
+    
+        执行语句然后返回结果DataFrame
 
-    ColumnPruning
+    * table(tableName)
 
-    InferFiltersFromConstraints
+        将一个表转化为DataFrame
 
-    CollapseRepartition
+    * udf
+        注册udf（用户自定义函数），以便在SQL语句中使用。
 
-    Collapses Repartition and RepartitionByExpression
+* sql.SQLContext()
 
-    CollapseProject
+    处理结构化数据的入口，在2.0版本中被SparkSession替代，但为了保证兼容性，目前还是保留了这个类
 
-    CollapseWindow
+    * cacheTable(tableName)/uncacheTable(tableName)/clearCache()
 
-    CombineFilters
+        在内存中缓存表/删除缓存中的表/清除缓存
+    
+    * createDateFrame()
 
-    CombineLimits
+    * createExternalTable() 
 
-    CombineUnions
+        基于数据源中的数据集创建一个外部表
 
-    NullPropagation
+    * registerDataFrameAsTable(df, tableName)   
 
-    FoldablePropagation
+        把指定的DataFrame注册成临时表
 
-    OptimizeIn
+    * registerFunction(name, f, returnType=StringType)
 
-    ConstantFolding
+        把一改python函数注册成自定义函数，在SQL语句中使用
 
-    ReorderAssociativeOperator
+    * registerJavaFunction(name, javaClassName, returnType=None)
 
-    LikeSimplification
+    * sql(sqlQuery)
+        执行SQL，将结果以DataFrame形式返回
 
-    BooleanSimplification
+    * table(tableName)
 
-    SimplifyConditionals
+    * tableNames(dbName=None)
 
-    RemoveDispensableExpressions
+        返回数据库中的表名列表
 
-    SimplifyBinaryComparison
+    * tables(dbName=None)
 
-    PruneFilters
+        返回数据库中的表名DataFrame
 
-    EliminateSorts
+* sql.HiveContext()
 
-    SimplifyCasts
+* sql.UDFRegistration(sqlContext)
 
-    SimplifyCaseConversionExpressions
+    * register(name, f, returnType=StringType)
 
-    RewriteCorrelatedScalarSubquery
+        将Python函数注册为用户自定义函数
 
-    EliminateSerialization
+* sql.DataFrame(jdf, sql_ctx)
 
-    RemoveRedundantAliases
+    DataFrame 相当于SparkSQL中的关系表，可以由SQLContext类来创建，自带方法十分丰富。 
+* sql.Column(jc)
 
-    RemoveRedundantProject
+    DataFrame中的一列，创建Column的实例是一个语法糖
 
-    SimplifyCreateStructOps
+        # 1. Select a column out of a DataFrame
 
-    SimplifyCreateArrayOps
+        df.colName
+        df["colName"]
 
-    SimplifyCreateMapOps
+        # 2. Create from an expression
+        df.colName + 1
+        1 / df.colName
+
+    也有非常丰富的方法，如排序，按位运算
+
+* sql.Row
+
+    DataFrame中的行
+    
+    可以通过row.key或者row[key]的方式，访问Row中的field
+
+    可以通过key in row这个表达式的真假值来判断row中有没有相应的key
+
+    * asDict(recursive=False)
+
+        将Row转化为字典形式，支持递归转化
+
+* sql.DataFrameNaFunctions(df)
+
+    用于处理DataFrame中的缺失数据
+
+    * drop(how='any', thresh=None, subset=None)
+
+        返回一个没有null值的DataFrame
+
+    * fill(value, subset=None)
+
+        把null都替换成指定的value
+    
+    * replace(to_replace, value, subset=None)
+
+        替换一些指定值
+
+* sql.DataFrameStatFunctions(df)
+
+    对DataFrame的统计功能，比如协方差
+
+* sql.DataFrameReader(spark)
+
+    用于从外部存储系统里读取DataFrame的接口，比如文件系统，KV存储等，通过spark.read()访问
+
+    * csv()
+
+        读取csv文件
+
+    * format(source)
+
+        指定数据源的格式
+
+            >>> df = spark.read.format('json').load('python/test_support/sql/people.json')
+            >>> df.dtypes
+            [('age', 'bigint'), ('name', 'string')]
+
+    * jdbc(url, table, column=None, lowerBound=None, upperBound=None, numPartitions=None, predicates=None, properties=None)
+
+        读取数据库的表构建DataFrame    
+
+        表的分区都是并行地读取。官方提醒不要在大集群上创建太多这种并行读取，否则Spark会把数据库弄崩溃。
+
+    * json()
+
+        读取json文件
+
+    * load(path=None, format=None, schema=None, **options)    
+
+        从数据源里载入数据
+    
+    * option(key, value)/options(**options)
+
+        增加输入选项，目前好像只支持timeZone选项，用于指定时区来对时间戳进行解析
+
+    * orc()
+
+        读取orc文件
+
+    * parquet()
+
+        读取parquet文件
+
+    * schema(schema)
+
+        指定读取的schema
+
+    * table(tableName)
+
+    * text()
+
+        读取txt文件
+
+* sql.DataFrameWriter(df)
+
+    将DataFrame写入到各种外部存储系统
+
+    * insertInto(tableName, overwrite=False)
+
+        将DataFrame插入到指定表里
+
+    * jdbc(url, table, mode=None, properties=None)
+
+    * json()
+
+    * mode(saveMode)
+
+        append, overwrite, error, ignore
+    
+    * option(key, value)
+
+        timeZone
+    
+    * orc()
+
+    * parquet()
+
+    * partitionBy(*cols)
+
+        输出时进行分区操作
+    
+    * save(path=None, format=None, mode=None, partitionBy=None, **options)
+
+        将DataFrame保存到数据源里
+    
+    * saveAsTable(name, format=None, mode=None, partitionBy=None, **options)
+
+        将DataFrame保存成指定的表
+
+    * text
+
+### pyspark.sql.types module
+
+数据类型转换
+* sql.types.DataType
+
+    * fromInternal(obj)/toInternal(obj)
+
+        将内部SQL对象转化成原生Python对象/反过来
+
+    * json()
+    * jsonvalue()
+    * simpleString()
+    * needConversion()
+
+        用于指定某些对象是否需要转化
+
+* sql.types.NullType
+* sql.types.StringType
+* sql.types.BinaryType
+* sql.types.BoolenType
+* sql.types.DateType
+
+    * EPOCH_ORDINAL = 719163
+
+    * fromInternal(v)
+
+    * needConversion()
+
+    * toInternal(d)
+
+* sql.types.TimestampType
+
+    * fromInternal(ts)
+
+    * needConversion()
+
+    * toInternal(dt)
+
+* sql.types.DecimalType(precision=10, scale=0)
+
+    指定定点精度的十进制数据类型，当数据范围超过六十四位有符号整形时可以使用
+
+    * jsonValue()
+    * simpleString()
+
+* sql.types.DoubleType
+* sql.types.FloatType
+* sql.types.ByteType
+    * simpleString()
+* sql.types.IntegerType
+    
+    32位
+    * simpleString()
+* sql.types.LongType  
+
+    64位
+    * simpleString()
+
+* sql.types.ShortType
+
+    16位
+    * simpleString()
+
+* sql.types.ArrayType(elementType, containsNull=True)
 
     
-* Check Cartesian Products
+    * fromInternal(obj)
 
-* Join Reorder
+    * fromJson(json)
 
-    CostBasedJoinReorder
-	
+    * jsonValue()
 
-* Decimal Optimizations	
+    * needConversion()
 
-    DecimalAggregates
-	
+    * simpleString()
 
-* Typed Filter Optimization	
+    * toInternal(obj)
+   
+* sql.types.MapType(keyType, valueType, valueContainsNull=True)
 
-    CombineTypedFilters
-	
+    * fromInternal(obj)
 
-* LocalRelation	
+    * fromJson(json)
 
-    ConvertToLocalRelation
-	
-    PropagateEmptyRelation
-	
+    * jsonValue()
 
-* OptimizeCodegen
-	
+    * needConversion()
 
-* RewriteSubquery
+    * simpleString()
 
-    RewritePredicateSubquery
+    * toInternal(obj)
 
-    CollapseProject
+* sql.types.StructType(fields=None)
 
-## Cost-Based Optimization (CBO) of Logical Query Plan
+    这个数据类型代表一个Row，支持多种语法糖来访问field
 
-基于统计信息，来选择最佳的执行计划。适用场景如：多表的连续join。
+    * add(field, data_type=None, nullable=True, metadata=None)
 
-### Oracle CBO
+        增加一个新元素
 
-ORACLE直方图是Oracle CBO优化器使用的一种统计数据：
+    * fromInternal(obj)
 
-比如有一个字段a，取值范围是1－10000，整个表有100万条记录，那么如果你要查询a>10 and a<100的记录，如果这样的记录有100条，那么走索引是最好的。
+    * fromJson(json)
 
-如果这样的记录有90万条，那么走索引肯定不如全表扫描。直方图里面可以看出记录的分布情况，比如1－100有多少条，101－200有多少条记录，等等。
+    * jsonValue()
 
-优化器通过使用直方图，可以更准确的判断使用什么执行计划最优。
+    * needConversion()
 
-统计信息：
+    * simpleString()
 
-1. 表中的统计信息：表行数，使用的块数，空的块数，块的使用率，行迁移和链接的数量，pctfree，pctused的数据，行的平均大小
+    * toInternal(obj)
+* sql.types.StructField(name, dataType, nullable=True, metadata=None)
+  
+    StructType中的一个field
+
+    * fromInternal(obj)
+
+    * fromJson(json)
+
+    * jsonValue()
+
+    * needConversion()
+
+    * simpleString()
+
+    * toInternal(obj)
+
+### pyspark.sql.functions module
+
+各种内建函数，比如各种反三角函数，编解码，格式转换，不同类型对象创建
+
+### pyspark.sql.streaming module
+
+在2.0中新增的模块，以流的形式在后台持续执行语句，所有方法都是线程安全的，不过这个模块还没有稳定下来。应该是标准spark streaming的sql扩展。
 
 
-2. 索引列的统计信息: 索引的深度（B-Tree的级别），索引叶级的块数量，集群因子（clustering_factor), 唯一值的个数
-
-3. 一般列的统计信息: 唯一的值个数，列最大小值，密度（选择率），数据分布（直方图信息），NUll值个数
 
 
-### Equi-Height Histograms for Columns
+# Difference with MySQL
 
-直方图有两种：
+## MySQL
     
-* 等高直方图，每个桶的最大最小值的差值是相等的。
-* 等频直方图，每个桶内数据的量是一样的。
+        SELECT
+            [ALL | DISTINCT | DISTINCTROW ]
+                [HIGH_PRIORITY]
+                [STRAIGHT_JOIN]
+                [SQL_SMALL_RESULT] [SQL_BIG_RESULT] [SQL_BUFFER_RESULT]
+                [SQL_CACHE | SQL_NO_CACHE] [SQL_CALC_FOUND_ROWS]
+            select_expr [, select_expr ...]
+            [FROM table_references
+                [PARTITION partition_list]
+            [WHERE where_condition]
+            [GROUP BY {col_name | expr | position}
+                [ASC | DESC], ... [WITH ROLLUP]]
+            [HAVING where_condition]
+            [ORDER BY {col_name | expr | position}
+                [ASC | DESC], ...]
+            [LIMIT {[offset,] row_count | row_count OFFSET offset}]
+            [PROCEDURE procedure_name(argument_list)]
+            [INTO OUTFILE 'file_name'
+                    [CHARACTER SET charset_name]
+                    export_options
+                | INTO DUMPFILE 'file_name'
+                | INTO var_name [, var_name]]
+            [FOR UPDATE | LOCK IN SHARE MODE]]
 
-Orcale中两者都有，等频直方图比等高直方图更稳定精确，但应用场景有限制，不如等高直方图应用场景多。
 
-等高直方图在解决数据倾斜分布方面很有效。
+## Supported Hive Features
 
-在等高直方图中，每个桶的范围是相同的，默认是254。
+Spark SQL supports the vast majority of Hive features, such as:
 
-**通过两步生成等高直方图**
-* 第一种算法，扫两次全表:
+* Hive query statements, including:
+    * SELECT
+    
+    * GROUP BY
+    
+    * ORDER BY
+    
+    * CLUSTER BY
+    
+    * SORT BY
 
-    1. 使用percentile_approx获得百分位数（横坐标的终点）。
-    2. 使用一个新的聚合函数在每个容器中获得不同的计数。
+* All Hive operators, including:
+    * Relational operators (=, ⇔, ==, <>, <, >, >=, 
+    <=, etc)
+    * Arithmetic operators (+, -, *, /, %, etc)
 
-* 第二种算法，
-    1. 用ApproximatePercentile获取百分比，p(0), p(1/n), p(2/n) ... p((n-1)/n), p(1)。
-    2. 构造桶的范围值，如：[p(0), p(1/n)], [p(1/n), p(2/n)] ... [p((n-1)/n), p(1)]。用ApproxCountDistinctForInterval计算每个桶的ndv（number of distinct values）。每个桶数据格式是（下界，上界，ndv）。
+    * Logical operators (AND, &&, OR, ||, etc)
 
-这里的模糊统计就可以使用 HyperLogLog算法（时间和空间复杂度都很低的一个算法，我目前了解到的最优算法），这个算法在Redis和CRDB中都有使用。
+    * Complex type constructors
 
-### Table Statistics
+    * Mathematical functions (sign, ln, cos, etc)
 
-1. Total size (in bytes) of a table or table partitions
+    * String functions (instr, length, printf, etc)
 
-2. Row count of a table or table partitions
+* User defined functions (UDF)
 
-3. Column statistics, i.e. min, max, num_nulls, distinct_count, avg_col_len, max_col_len, histogram
+* User defined aggregation functions (UDAF)
 
-### CatalogStatistics — Table Statistics From External Catalog (Metastore)
+* User defined serialization formats (SerDes)
 
-1. Physical total size (in bytes)
+* Window functions
 
-2. Estimated number of rows (aka row count)
+* Joins
 
-3. Column statistics (i.e. column names and their statistics)
+    * JOIN
 
-### ColumnStat — Column Statistics
+    * {LEFT|RIGHT|FULL} OUTER JOIN
 
-|Name|Description|
-|-|-|
-|distinctCount | Number of distinct values|
-|min|Minimum value|
-|max|Maximum value|
-|nullCount|Number of null values|
-|avgLen|Average length of the values|
-|maxLen|Maximum length of the values|
-|histogram|Histogram of values (as Histogram which is empty by default)|
+    * LEFT SEMI JOIN
 
-## Adaptive Query Execution
+    * CROSS JOIN
 
-这个优化是允许基于运行时的统计信息，进行执行计划的优化。
+* Unions
 
-At runtime, the adaptive execution mode can change shuffle join to broadcast join if it finds the size of one table is less than the broadcast threshold.
+* Sub-queries
 
-It can also handle skewed input data for join and change the partition number of the next stage to better fit the data scale.
+    * SELECT col FROM ( SELECT a + b AS col from t1) t2
+* Sampling
+* Explain
+* Partitioned tables including dynamic partition insertion
+* View
+* All Hive DDL Functions, including:
+    * CREATE TABLE
+    * CREATE TABLE AS SELECT
+    * ALTER TABLE
+* Most Hive Data types, including:
+    * TINYINT
+    * SMALLINT
+    * INT
+    * BIGINT
+    * BOOLEAN
+    * FLOAT
+    * DOUBLE
+    * STRING
+    * BINARY
+    * TIMESTAMP
+    * DATE
+    * ARRAY<>
+    * MAP<>
+    * STRUCT<>
 
-In general, adaptive execution decreases the effort involved in tuning SQL query parameters and improves the execution performance by choosing a better execution plan and parallelism at runtime.
+## Hive SQL
 
-### SparkSQL 中的三种Join
+    SELECT [ALL | DISTINCT] select_expr, select_expr, ...
+    FROM table_reference
+    [WHERE where_condition]
+    [GROUP BY col_list [HAVING condition]]
+    [   CLUSTER BY col_list
+    | [DISTRIBUTE BY col_list] [SORT BY| ORDER BY col_list]
+    ]
+    [LIMIT number]
+* 使用ALL和DISTINCT选项区分对重复记录的处理。默认是ALL，表示查询所有记录。DISTINCT表示去掉重复的记录
 
-* Broadcast Join
+* Where 条件, 类似我们传统SQL的where 条件
+* 目前支持 AND, OR, between, IN, NOT IN
+* 不支持EXIST ,NOT EXIST
+* ORDER BY 全局排序，只有一个Reduce任务
+* SORT BY 只在本机做排序
+* Limit 可以限制查询的记录数
+        
+        SELECT * FROM t1 LIMIT 5
 
-    在数据库的常见模型中（比如星型模型或者雪花模型），表一般分为两种：事实表和维度表。维度表一般指固定的、变动较少的表，例如联系人、物品种类等，一般数据有限。而事实表一般记录流水，比如销售清单等，通常随着时间的增长不断膨胀。
+* REGEX Column Specification
 
-    因为Join操作是对两个表中key值相同的记录进行连接，在SparkSQL中，对两个表做Join最直接的方式是先根据key分区，再在每个分区中把key值相同的记录拿出来做连接操作。但这样就不可避免地涉及到shuffle，而shuffle在Spark中是比较耗时的操作，我们应该尽可能的设计Spark应用使其避免大量的shuffle。
+    SELECT 语句可以使用正则表达式做列选择，下面的语句查询除了 ds 和 hr 之外的所有列：
 
-    Shuffle是介于Map和Reduce之间的操作，Map把原材料按规则分割，Shuffle把原材料分配到不同的流水线上，Reduce则在流水线上完成装配。
+        SELECT `(ds|hr)?+.+` FROM test
 
-    当维度表和事实表进行Join操作时，为了避免shuffle，我们可以将大小有限的维度表的全部数据分发到每个节点上，供事实表使用。executor存储维度表的全部数据，一定程度上牺牲了空间，换取shuffle操作大量的耗时，这在SparkSQL中称作Broadcast Join，如下图所示：
+* 基于Partition的查询
+    * 一般 SELECT 查询会扫描整个表，使用 PARTITIONED BY 子句建表，查询就可以利用分区剪枝（input pruning）的特性
+    * Hive 当前的实现是，只有分区断言出现在离 FROM 子句最近的那个WHERE 子句中，才会启用分区剪枝
 
-    ![](SparkBroadcastJoin.jpg)
+* Join
+        
+        Syntax
+        join_table: 
+        table_reference JOIN table_factor [join_condition] 
+        | table_reference {LEFT|RIGHT|FULL} [OUTER] JOIN table_reference join_condition 
+        | table_reference LEFT SEMI JOIN table_reference join_condition 
 
-    Table B是较小的表，黑色表示将其广播到每个executor节点上，Table A的每个partition会通过block manager取到Table A的数据。根据每条记录的Join Key取到Table B中相对应的记录，根据Join Type进行操作。这个过程比较简单，不做赘述。
+        table_reference: 
+            table_factor 
+        | join_table 
 
-    Broadcast Join的条件有以下几个：
+        table_factor: 
+            tbl_name [alias] 
+        | table_subquery alias 
+        | ( table_references ) 
 
-    1. 被广播的表需要小于spark.sql.autoBroadcastJoinThreshold所配置的值，默认是10M （或者加了broadcast join的hint）
+        join_condition: 
+            ON equality_expression ( AND equality_expression )* 
 
-    2. 基表不能被广播，比如left outer join时，只能广播右表
+        equality_expression: 
+            expression = expression
+    
+    * Hive 只支持等值连接（equality joins）、外连接（outer joins）和（left semi joins）。Hive 不支持所有非等值的连接，因为非等值连接非常难转化到 map/reduce 任务
+ 
+    * LEFT，RIGHT和FULL OUTER关键字用于处理join中空记录的情况
+    * LEFT SEMI JOIN 是 IN/EXISTS 子查询的一种更高效的实现
+    * join 时，每次 map/reduce 任务的逻辑是这样的：reducer 会缓存 join 序列中除了最后一个表的所有表的记录，再通过最后一个表将结果序列化到文件系统
+    * 实践中，应该把最大的那个表写在最后
 
-    看起来广播是一个比较理想的方案，但它有没有缺点呢？也很明显。这个方案只能用于广播较小的表，否则数据的冗余传输就远大于shuffle的开销；另外，广播时需要将被广播的表现collect到driver端，当频繁有广播出现时，对driver的内存也是一个考验。
-
-* Shuffle Hash Join
-
-    当一侧的表比较小时，我们选择将其广播出去以避免shuffle，提高性能。但因为被广播的表首先被collect到driver段，然后被冗余分发到每个executor上，所以当表比较大时，采用broadcast join会对driver端和executor端造成较大的压力。
-
-    但由于Spark是一个分布式的计算引擎，可以通过分区的形式将大批量的数据划分成n份较小的数据集进行并行计算。这种思想应用到Join上便是Shuffle Hash Join了。利用key相同必然分区相同的这个原理，SparkSQL将较大表的join分而治之，先将表划分成n个分区，再对两个表中相对应分区的数据分别进行Hash Join，这样即在一定程度上减少了driver广播一侧表的压力，也减少了executor端取整张被广播表的内存消耗。其原理如下图：
-
-    ![](SparkShuffleHashJoin.jpg)
-
-    Shuffle Hash Join分为两步：
-
-    1. 对两张表分别按照join keys进行重分区，即shuffle，目的是为了让有相同join keys值的记录分到对应的分区中
-
-    2. 对对应分区中的数据进行join，此处先将小表分区构造为一张hash表，然后根据大表分区中记录的join keys值拿出来进行匹配
-
-    Shuffle Hash Join的条件有以下几个：
-
-    1. 分区的平均大小不超过spark.sql.autoBroadcastJoinThreshold所配置的值，默认是10M 
-
-    2. 基表不能被广播，比如left outer join时，只能广播右表
-
-    3. 一侧的表要明显小于另外一侧，小的一侧将被广播（明显小于的定义为3倍小，此处为经验值）
-
-    我们可以看到，在一定大小的表中，SparkSQL从时空结合的角度来看，将两个表进行重新分区，并且对小表中的分区进行hash化，从而完成join。在保持一定复杂度的基础上，尽量减少driver和executor的内存压力，提升了计算时的稳定性。
-
-* Sort Merge Join
-
-    上面介绍的两种实现对于一定大小的表比较适用，但当两个表都非常大时，显然无论适用哪种都会对计算内存造成很大压力。这是因为join时两者采取的都是hash join，是将一侧的数据完全加载到内存中，使用hash code取join keys值相等的记录进行连接。
-
-    当两个表都非常大时，SparkSQL采用了一种全新的方案来对表进行Join，即Sort Merge Join。这种实现方式不用将一侧数据全部加载后再进行hash join，但需要在join前将数据排序，如下图所示：
-
-    ![](SparkSortMergeJoin1.jpg)
-
-    可以看到，首先将两张表按照join keys进行了重新shuffle，保证join keys值相同的记录会被分在相应的分区。分区后对每个分区内的数据进行排序，排序后再对相应的分区内的记录进行连接，如下图示：
-
-    ![](SparkSortMergeJoin2.jpg)
-
-    因为两个序列都是有序的，从头遍历，碰到key相同的就输出；如果不同，左边小就继续取左边，反之取右边。
-
-    可以看出，无论分区有多大，Sort Merge Join都不用把某一侧的数据全部加载到内存中，而是即用即取即丢，从而大大提升了大数据量下sql join的稳定性。
-
-## Subexpression Elimination In Code-Generated Expression Evaluation (Common Expression Reuse)
-
-子表达式消除/一般表达式的重用
+    * SELECT a.* FROM a JOIN b ON (a.id = b.id)
+    * SELECT a.* FROM a JOIN b 
+        ON (a.id = b.id AND a.department = b.department)
+    * 可以 join 多于 2 个表，例如
+    SELECT a.val, b.val, c.val FROM a JOIN b 
+        ON (a.key = b.key1) JOIN c ON (c.key = b.key2)
+    
+    * 如果join中多个表的 join key 是同一个，则 join 会被转化为单个 map/reduce 任务
